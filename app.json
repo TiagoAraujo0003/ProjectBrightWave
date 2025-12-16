@@ -2,7 +2,7 @@
   "id": "501530b1-84d1-422e-a07e-a7d37a4b2cfb",
   "name": "ProjetoBrightWave",
   "publisher": "Default Publisher",
-  "version": "1.0.0.0",
+  "version": "1.0.0.1",
   "brief": "",
   "description": "",
   "privacyStatement": "",
@@ -20,7 +20,8 @@
       "to": 50249
     }
   ],
-  "resourceExposurePolicy": {
+  "resourceExposurePolicy":
+  {
     "allowDebugging": true,
     "allowDownloadingSource": true,
     "includeSourceInSymbolFile": true
