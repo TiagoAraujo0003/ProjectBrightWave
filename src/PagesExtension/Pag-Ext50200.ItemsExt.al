@@ -7,6 +7,7 @@ pageextension 50200 "Items Ext" extends "Item List"
             field(ProdCat; Rec.ProdCat)
             {
                 ApplicationArea = All;
+                caption = 'Product Category';
             }
             field(Brand; Rec.Brand)
             {
@@ -15,10 +16,12 @@ pageextension 50200 "Items Ext" extends "Item List"
             field(CertificateNo; Rec.CertificateNo)
             {
                 ApplicationArea = All;
+                caption = 'Certificate No.';
             }
             field(CertExpireDate; Rec.CertExpireDate)
             {
                 ApplicationArea = All;
+                caption = 'Certificate Expiring Date';
             }
         }
     }
