@@ -44,6 +44,16 @@ table 50200 "Certificate"
         {
             Caption = 'Valid To';
         }
+        field(10; "Created By"; Code[50])
+        {
+            Caption = 'Created By';
+            Editable = false;
+        }
+        field(11; "Created On"; DateTime)
+        {
+            Caption = 'Created On';
+            Editable = false;
+        }
     }
 
     keys
