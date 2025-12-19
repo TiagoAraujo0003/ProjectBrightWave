@@ -1,0 +1,12 @@
+*.app
+*.flf
+*.bclicense
+*.g.xlf
+.DS_Store
+Thumbs.db
+TestResults*.xml
+bcptTestResults*.json
+BuildOutput.txt
+cache_*
+~$*
+*rad.json

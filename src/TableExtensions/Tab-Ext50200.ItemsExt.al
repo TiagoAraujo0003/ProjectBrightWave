@@ -4,6 +4,7 @@ tableextension 50200 "Items Ext" extends Item
     {
         field(50200; ProdCat; Text[50])
         {
+            Caption = 'Product Category';
         }
         field(50201; Brand; Text[50])
         {
