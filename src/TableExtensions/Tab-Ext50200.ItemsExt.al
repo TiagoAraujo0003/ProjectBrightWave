@@ -15,6 +15,29 @@ tableextension 50200 "Items Ext" extends Item
         field(50203; CertExpireDate; Date)
         {
         }
+        field(50204; CertModifiedBy; Code[50])
+        {
+            Caption = 'Certificate Modified By';
+            DataClassification = CustomerContent;
+            Editable = false;
+        }
+        field(50205; CertModifiedDate; Date)
+        {
+            Caption = 'Certificate Modified Date';
+            DataClassification = CustomerContent;
+            Editable = false;
+        }
     }
+
+    trigger OnBeforeModify()
+    var
+        OldItem: Record Item;
+    begin
+        OldItem.Get(Rec."No.");
+        if Rec.CertificateNo <> OldItem.CertificateNo then begin
+            Rec.CertModifiedBy := CopyStr(UserId, 1, 50);
+            Rec.CertModifiedDate := Today;
+        end;
+    end;
 }
 
