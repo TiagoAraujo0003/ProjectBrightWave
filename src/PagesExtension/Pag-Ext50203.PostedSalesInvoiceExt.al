@@ -5,11 +5,11 @@ pageextension 50203 "Posted Sales Invoice Ext" extends "Posted Sales Invoice"
         addfirst(processing)
         {
 
-            action("Line Certificate")
+            action("Certificate")
             {
                 ApplicationArea = All;
-                Caption = 'Safety Certificate for Item';
-                ToolTip = 'Create Safety Certificate for selected item';
+                Caption = 'Safety Certificate';
+                ToolTip = 'Create Safety Certificate for all items with certificates';
                 Image = Certificate;
                 Promoted = true;
                 PromotedCategory = Process;
@@ -20,22 +20,27 @@ pageextension 50203 "Posted Sales Invoice Ext" extends "Posted Sales Invoice"
                     SalesInvLine: Record "Sales Invoice Line";
                     CertReport: Report "Certificate";
                     Item: Record Item;
+                    HasCertificate: Boolean;
                 begin
-                    CurrPage.SalesInvLines.Page.GetRecord(SalesInvLine);
+                    // Verificar se existe pelo menos um item com certificado
+                    SalesInvLine.SetRange("Document No.", Rec."No.");
+                    SalesInvLine.SetRange(Type, SalesInvLine.Type::Item);
+                    if SalesInvLine.FindSet() then
+                        repeat
+                            if Item.Get(SalesInvLine."No.") then
+                                if Item.CertificateNo <> '' then
+                                    HasCertificate := true;
+                        until (SalesInvLine.Next() = 0) or HasCertificate;
 
-                    if SalesInvLine.Type <> SalesInvLine.Type::Item then
-                        Error('Please select an item line.');
+                    if not HasCertificate then
+                        Error('No items with certificates found in this invoice.');
 
-                    if not Item.Get(SalesInvLine."No.") then
-                        Error('Item not found.');
-
-                    if Item.CertificateNo = '' then
-                        Error('This item does not have a certificate.');
-
-                    SalesInvHeader.Get(Rec."No.");
-                    CertReport.SetTableView(SalesInvHeader);
-                    CertReport.SetItemNo(SalesInvLine."No.");
-                    CertReport.Run();
+                    SalesInvHeader.Reset();
+                    SalesInvHeader.SetRange("No.", Rec."No.");
+                    if SalesInvHeader.FindFirst() then begin
+                        CertReport.SetTableView(SalesInvHeader);
+                        CertReport.Run();
+                    end;
                 end;
             }
         }
