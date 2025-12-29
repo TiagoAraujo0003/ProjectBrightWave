@@ -25,23 +25,11 @@ report 50200 "Certificate"
 
                 trigger OnAfterGetRecord()
                 begin
-                    // Se foi especificado um item, processar apenas esse
-                    if SpecificItemNo <> '' then begin
-                        if SalesInvoiceLine."No." <> SpecificItemNo then
-                            CurrReport.Skip();
-                    end;
-
                     if not ItemRec.Get(SalesInvoiceLine."No.") then
                         CurrReport.Skip();
 
                     if ItemRec.CertificateNo = '' then
                         CurrReport.Skip();
-
-                    // Se nenhum item específico foi definido, processar apenas o primeiro
-                    if (SpecificItemNo = '') and CertificateProcessed then
-                        CurrReport.Skip();
-
-                    CertificateProcessed := true;
                 end;
             }
         }
@@ -58,11 +46,4 @@ report 50200 "Certificate"
 
     var
         ItemRec: Record Item;
-        SpecificItemNo: Code[20];
-        CertificateProcessed: Boolean;
-
-    procedure SetItemNo(ItemNo: Code[20])
-    begin
-        SpecificItemNo := ItemNo;
-    end;
 }

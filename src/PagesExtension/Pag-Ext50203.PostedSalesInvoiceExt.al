@@ -21,19 +21,32 @@ pageextension 50203 "Posted Sales Invoice Ext" extends "Posted Sales Invoice"
                     CertReport: Report "Certificate";
                     Item: Record Item;
                     HasCertificate: Boolean;
+                    ExpiredItems: Text;
                 begin
-                    // Verificar se existe pelo menos um item com certificado
+                    // Verificar se existe pelo menos um item com certificado e validar validade
                     SalesInvLine.SetRange("Document No.", Rec."No.");
                     SalesInvLine.SetRange(Type, SalesInvLine.Type::Item);
                     if SalesInvLine.FindSet() then
                         repeat
-                            if Item.Get(SalesInvLine."No.") then
-                                if Item.CertificateNo <> '' then
+                            if Item.Get(SalesInvLine."No.") then begin
+                                if Item.CertificateNo <> '' then begin
                                     HasCertificate := true;
-                        until (SalesInvLine.Next() = 0) or HasCertificate;
+
+                                    // Validar se o certificado está dentro da validade
+                                    if Item.CertExpireDate < Today then begin
+                                        if ExpiredItems <> '' then
+                                            ExpiredItems += ', ';
+                                        ExpiredItems += Item."No." + ' (' + Item.Description + ')';
+                                    end;
+                                end;
+                            end;
+                        until SalesInvLine.Next() = 0;
 
                     if not HasCertificate then
                         Error('No items with certificates found in this invoice.');
+
+                    if ExpiredItems <> '' then
+                        Error('Certificate expired for: %1', ExpiredItems);
 
                     SalesInvHeader.Reset();
                     SalesInvHeader.SetRange("No.", Rec."No.");
