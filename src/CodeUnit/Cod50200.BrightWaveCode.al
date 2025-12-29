@@ -15,4 +15,17 @@ codeunit 50200 "BrightWave Code"
         else
             Error('Certificate No. must be 8 characters');
     end;
+
+    procedure GetCertificateChangeLog(ItemNo: Code[20]): Text
+    var
+        Item: Record Item;
+    begin
+        if Item.Get(ItemNo) then begin
+            if (Item.CertModifiedBy <> '') and (Item.CertModifiedDate <> 0D) then
+                exit(StrSubstNo('Certificate modified by %1 on %2', Item.CertModifiedBy, Format(Item.CertModifiedDate)))
+            else
+                exit('');
+        end else
+            exit('');
+    end;
 }
