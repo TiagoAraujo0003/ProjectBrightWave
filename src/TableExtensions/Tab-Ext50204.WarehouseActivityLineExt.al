@@ -1,4 +1,4 @@
-tableextension 50202 "Warehouse Activity Line Ext" extends "Warehouse Activity Line"
+tableextension 50204 "Warehouse Activity Line Ext" extends "Warehouse Activity Line"
 {
     fields
     {

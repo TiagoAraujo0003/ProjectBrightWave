@@ -1,4 +1,4 @@
-pageextension 50204 "Whse. Activity Subform Ext" extends "Whse. Pick Subform"
+pageextension 50208 "Whse. Activity Subform Ext" extends "Whse. Pick Subform"
 {
     layout
     {
