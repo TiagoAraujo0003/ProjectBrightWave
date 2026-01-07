@@ -78,6 +78,19 @@ table 50201 "Warehouse Box"
             TableRelation = "Warehouse Activity Header"."No." where(Type = const(Pick));
             DataClassification = CustomerContent;
             Editable = false;
+
+            trigger OnValidate()
+            var
+                WhseActivityLine: Record "Warehouse Activity Line";
+            begin
+                // Buscar o Shipment No. da primeira linha do pick
+                if "Whse. Activity No." <> '' then begin
+                    WhseActivityLine.SetRange("Activity Type", WhseActivityLine."Activity Type"::Pick);
+                    WhseActivityLine.SetRange("No.", "Whse. Activity No.");
+                    if WhseActivityLine.FindFirst() then
+                        Validate("Whse. Shipment No.", WhseActivityLine."Whse. Document No.");
+                end;
+            end;
         }
         field(11; "Whse. Shipment No."; Code[20])
         {
@@ -85,6 +98,21 @@ table 50201 "Warehouse Box"
             TableRelation = "Warehouse Shipment Header"."No.";
             DataClassification = CustomerContent;
             Editable = false;
+
+            trigger OnValidate()
+            var
+                WhseShipmentHeader: Record "Warehouse Shipment Header";
+            begin
+                // Atualizar o Warehouse Shipment Header com o Box No.
+                if "Whse. Shipment No." <> '' then begin
+                    if WhseShipmentHeader.Get("Whse. Shipment No.") then begin
+                        if WhseShipmentHeader."Box No." = '' then begin
+                            WhseShipmentHeader."Box No." := "Box No.";
+                            WhseShipmentHeader.Modify(true);
+                        end;
+                    end;
+                end;
+            end;
         }
         field(12; "Sales Order No."; Code[20])
         {
@@ -136,7 +164,24 @@ table 50201 "Warehouse Box"
     }
 
     trigger OnInsert()
+    var
+        BoxNumber: Integer;
     begin
+        if "Box No." = '' then
+            "Box No." := GetNextBoxNo();
+
+        // Auto-fill Location Code if empty
+        if "Location Code" = '' then
+            "Location Code" := 'BRIGHTWAVE';
+
+        // Auto-fill Description if empty
+        if Description = '' then begin
+            if Evaluate(BoxNumber, CopyStr("Box No.", 4)) then
+                Description := 'Standard Box ' + Format(BoxNumber)
+            else
+                Description := 'Standard Box';
+        end;
+
         "Created Date" := Today;
         "Created By" := CopyStr(UserId, 1, MaxStrLen("Created By"));
         Status := Status::Available;
@@ -191,5 +236,32 @@ table 50201 "Warehouse Box"
             exit(false);
 
         exit(true);
+    end;
+
+    local procedure GetNextBoxNo(): Code[20]
+    var
+        WhseBox: Record "Warehouse Box";
+        BoxPrefix: Code[10];
+        NextNo: Integer;
+        CurrentNo: Integer;
+        NumericPart: Text;
+    begin
+        BoxPrefix := 'BOX';
+        NextNo := 0;
+
+        WhseBox.Reset();
+        if WhseBox.FindSet() then
+            repeat
+                if CopyStr(WhseBox."Box No.", 1, StrLen(BoxPrefix)) = BoxPrefix then begin
+                    NumericPart := CopyStr(WhseBox."Box No.", StrLen(BoxPrefix) + 1);
+                    if Evaluate(CurrentNo, NumericPart) then begin
+                        if CurrentNo > NextNo then
+                            NextNo := CurrentNo;
+                    end;
+                end;
+            until WhseBox.Next() = 0;
+
+        NextNo := NextNo + 1;
+        exit(BoxPrefix + Format(NextNo, 0, '<Integer,4><Filler Character,0>'));
     end;
 }

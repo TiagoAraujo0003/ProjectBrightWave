@@ -201,38 +201,100 @@ codeunit 50201 "Warehouse Box Management"
         WhseBox: Record "Warehouse Box";
         Location: Record Location;
         LocationPage: Page "Location List";
-        StartNo: Integer;
-        EndNo: Integer;
+        NextNo: Integer;
+        Quantity: Integer;
         BoxPrefix: Code[10];
         LocationCode: Code[10];
         i: Integer;
+        CurrentNo: Integer;
+        NumericPart: Text;
+        FirstBoxNo: Code[20];
+        LastCreatedBoxNo: Code[20];
+        CreatedMsg: Label '%1 boxes created successfully (from %2 to %3).';
     begin
-        // Get parameters from user
-        LocationPage.LookupMode := true;
-        if LocationPage.RunModal() = Action::LookupOK then begin
-            LocationPage.GetRecord(Location);
-            LocationCode := Location.Code;
-        end else
-            exit;
+        // Set default location
+        LocationCode := 'BRIGHTWAVE';
 
-        BoxPrefix := 'BOX';
-        if not Evaluate(StartNo, '1') then
-            exit;
-        if not Evaluate(EndNo, '10') then
-            exit;
-
-        if not Confirm('Create boxes %1001 to %1010 for location %2?', true, BoxPrefix, BoxPrefix, LocationCode) then
-            exit;
-
-        for i := StartNo to EndNo do begin
-            WhseBox.Init();
-            WhseBox."Box No." := BoxPrefix + Format(i, 0, '<Integer,4><Filler Character,0>');
-            WhseBox."Location Code" := LocationCode;
-            WhseBox.Description := 'Standard Box ' + Format(i);
-            if WhseBox.Insert(true) then;
+        // Allow user to change location if needed
+        if Location.Get(LocationCode) then begin
+            if not Confirm('Use location %1?', true, LocationCode) then begin
+                LocationPage.LookupMode := true;
+                if LocationPage.RunModal() = Action::LookupOK then begin
+                    LocationPage.GetRecord(Location);
+                    LocationCode := Location.Code;
+                end else
+                    exit;
+            end;
+        end else begin
+            // Default location not found, ask user to select
+            LocationPage.LookupMode := true;
+            if LocationPage.RunModal() = Action::LookupOK then begin
+                LocationPage.GetRecord(Location);
+                LocationCode := Location.Code;
+            end else
+                exit;
         end;
 
-        Message('%1 boxes created successfully.', EndNo - StartNo + 1);
+        // Get quantity from user
+        Quantity := 10; // Default value
+        if not GetQuantityFromUser(Quantity) then
+            exit;
+
+        if (Quantity <= 0) or (Quantity > 100) then begin
+            Message('Quantity must be between 1 and 100.');
+            exit;
+        end;
+
+        BoxPrefix := 'BOX';
+
+        // Find the highest existing box number
+        NextNo := 0;
+        WhseBox.Reset();
+        if WhseBox.FindSet() then
+            repeat
+                // Check if box starts with our prefix
+                if CopyStr(WhseBox."Box No.", 1, StrLen(BoxPrefix)) = BoxPrefix then begin
+                    // Get the numeric part after the prefix
+                    NumericPart := CopyStr(WhseBox."Box No.", StrLen(BoxPrefix) + 1);
+                    if Evaluate(CurrentNo, NumericPart) then begin
+                        if CurrentNo > NextNo then
+                            NextNo := CurrentNo;
+                    end;
+                end;
+            until WhseBox.Next() = 0;
+
+        // Start from the next number
+        NextNo := NextNo + 1;
+
+        FirstBoxNo := BoxPrefix + Format(NextNo, 0, '<Integer,4><Filler Character,0>');
+        LastCreatedBoxNo := BoxPrefix + Format(NextNo + Quantity - 1, 0, '<Integer,4><Filler Character,0>');
+
+        if not Confirm('Create %1 boxes from %2 to %3 for location %4?', true,
+                       Quantity, FirstBoxNo, LastCreatedBoxNo, LocationCode) then
+            exit;
+
+        // Create the boxes
+        for i := 0 to Quantity - 1 do begin
+            WhseBox.Init();
+            WhseBox."Box No." := BoxPrefix + Format(NextNo + i, 0, '<Integer,4><Filler Character,0>');
+            WhseBox."Location Code" := LocationCode;
+            WhseBox.Description := 'Standard Box ' + Format(NextNo + i);
+            WhseBox.Insert(true);
+        end;
+
+        Message(CreatedMsg, Quantity, FirstBoxNo, LastCreatedBoxNo);
+    end;
+
+    local procedure GetQuantityFromUser(var Quantity: Integer): Boolean
+    var
+        InputDialog: Page "Quantity Input Dialog";
+    begin
+        InputDialog.SetQuantity(Quantity);
+        if InputDialog.RunModal() = Action::OK then begin
+            Quantity := InputDialog.GetQuantity();
+            exit(true);
+        end;
+        exit(false);
     end;
 
     local procedure FindWhseShipmentLine(var WhseShipmentLine: Record "Warehouse Shipment Line"; WhseActivityLine: Record "Warehouse Activity Line"): Boolean
