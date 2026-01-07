@@ -68,4 +68,10 @@ codeunit 50202 "Warehouse Box Posting Integ."
         end;
     }
     */
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Whse.-Post Shipment", 'OnAfterPostWhseShipment', '', false, false)]
+    local procedure OnAfterPostWhseShipment(var WarehouseShipmentHeader: Record "Warehouse Shipment Header")
+    begin
+        WhseBoxMgt.OnAfterWhseShipmentPost(WarehouseShipmentHeader);
+    end;
 }
