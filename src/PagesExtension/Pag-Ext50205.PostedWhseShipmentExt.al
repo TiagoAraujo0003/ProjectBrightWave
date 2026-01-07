@@ -14,7 +14,16 @@ pageextension 50205 "Posted Whse. Shipment Ext" extends "Posted Whse. Shipment"
                 PromotedCategory = Process;
                 PromotedIsBig = true;
                 PromotedOnly = true;
-                RunObject = report "Warehouse Shipment Box List";
+
+                trigger OnAction()
+                var
+                    PostedWhseShptHeader: Record "Posted Whse. Shipment Header";
+                    BoxListReport: Report "Warehouse Shipment Box List";
+                begin
+                    PostedWhseShptHeader.SetRange("No.", Rec."No.");
+                    BoxListReport.SetTableView(PostedWhseShptHeader);
+                    BoxListReport.Run();
+                end;
             }
         }
     }
