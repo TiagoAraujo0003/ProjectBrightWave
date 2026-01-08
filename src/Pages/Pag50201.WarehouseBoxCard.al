@@ -125,12 +125,42 @@ page 50201 "Warehouse Box Card"
         {
             action(Contents)
             {
-                ApplicationArea = Warehouse;
+                ApplicationArea = All;
                 Caption = 'Contents';
                 ToolTip = 'View the contents of this box.';
                 Image = ViewDetails;
                 RunObject = page "Warehouse Box Contents";
                 RunPageLink = "Box No." = field("Box No.");
+            }
+        }
+        area(Processing)
+        {
+            action(BoxLabels)
+            {
+                ApplicationArea = All;
+                Caption = 'Shipping Box Label';
+                ToolTip = 'Print label for this box.';
+                Image = Print;
+                Enabled = CanPrintLabel;
+
+                trigger OnAction()
+                var
+                    WarehouseBox: Record "Warehouse Box";
+                    WarehouseBoxLabelsReport: Report "Warehouse Box Labels";
+                begin
+                    WarehouseBox.SetRange("Box No.", Rec."Box No.");
+                    WarehouseBoxLabelsReport.SetTableView(WarehouseBox);
+                    WarehouseBoxLabelsReport.Run();
+                end;
+            }
+        }
+        area(Promoted)
+        {
+            group(Category_Process)
+            {
+                Caption = 'Process';
+
+                actionref(BoxLabels_Promoted; BoxLabels) { }
             }
         }
     }
@@ -146,9 +176,11 @@ page 50201 "Warehouse Box Card"
 
         WeightExceeded := (Rec."Max Weight (kg)" > 0) and (Rec."Current Weight (kg)" > Rec."Max Weight (kg)");
         VolumeExceeded := (Rec."Max Volume (cm³)" > 0) and (Rec."Current Volume (cm³)" > Rec."Max Volume (cm³)");
+        CanPrintLabel := Rec.Status in [Rec.Status::"In Use", Rec.Status::Shipped];
     end;
 
     var
         WeightExceeded: Boolean;
         VolumeExceeded: Boolean;
+        CanPrintLabel: Boolean;
 }
